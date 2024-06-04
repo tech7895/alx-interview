@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
 This script is a method that determines if all the boxes can be opened
 
