@@ -12,29 +12,37 @@ if (process.argv.length > 2) {
   request(`${API_URL}/films/${process.argv[2]}/`, (err, _, body) => {
     // If an error occurred during the request, log the error
     if (err) {
-      console.log(err);
+      return console.error(err);
     }
-    // This gets the characters URL from the film's response body
-    const charactersURL = JSON.parse(body).characters;
+    
+    try {
+      // This gets the characters URL from the film's response body
+      const charactersURL = JSON.parse(body).characters;
 
-    // Create an array of Promises that resolve with the names of the characters
-    const charactersName = charactersURL.map(
-      url => new Promise((resolve, reject) => {
-        // Make a request to the character resource
-        request(url, (promiseErr, __, charactersReqBody) => {
-          // If an error occurred during the request, reject the Promise with the error
-          if (promiseErr) {
-            reject(promiseErr);
-          }
-          // Resolve the Promise with the name of the character
-          resolve(JSON.parse(charactersReqBody).name);
-        });
-      }));
+      // Create an array of Promises that resolve with the names of the characters
+      const charactersName = charactersURL.map(
+        url => new Promise((resolve, reject) => {
+          // Make a request to the character resource
+          request(url, (promiseErr, __, charactersReqBody) => {
+            // If an error occurred during the request, reject the Promise with the error
+            if (promiseErr) {
+              return reject(promiseErr);
+            }
+            // Resolve the Promise with the name of the character
+            resolve(JSON.parse(charactersReqBody).name);
+          });
+        })
+      );
 
-    // Wait for all Promises to resolve and log the names of the
-	  // characters, separated by new lines
-    Promise.all(charactersName)
-      .then(names => console.log(names.join('\n')))
-      .catch(allErr => console.log(allErr));
+      // Wait for all Promises to resolve and log the names of the characters, separated by new lines
+      Promise.all(charactersName)
+        .then(names => console.log(names.join('\n')))
+        .catch(allErr => console.error(allErr));
+
+    } catch (parseErr) {
+      console.error('Error parsing JSON:', parseErr);
+    }
   });
+} else {
+  console.error('Please provide a film ID as a command line argument.');
 }
